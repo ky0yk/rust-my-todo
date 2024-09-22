@@ -1,6 +1,6 @@
 use std::{collections::HashMap, sync::{Arc, RwLock, RwLockReadGuard, RwLockWriteGuard}};
 
-use anyhow::{Context, Ok};
+use anyhow::Context;
 use serde::{Deserialize, Serialize};
 use thiserror::Error;
 
@@ -31,6 +31,13 @@ pub struct Todo {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
 pub struct  CreateTodo {
     text: String
+}
+
+#[cfg(test)]
+impl CreateTodo {
+    pub fn new(text: String) -> Self {
+        Self { text }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq, Eq)]
@@ -80,14 +87,17 @@ impl TodoRepository for TodoRepositoryForMemory {
         store.insert(id, todo.clone());
         todo
     }
+
     fn find(&self, id: i32) -> Option<Todo> {
         let store = self.read_store_ref();
         store.get(&id).map(|todo| todo.clone())
     }
+
     fn all(&self) -> Vec<Todo> {
         let store = self.read_store_ref();
         Vec::from_iter(store.values().map(|todo| todo.clone()))
     }
+
     fn update(&self, id:i32, payload: UpdateTodo) -> anyhow::Result<Todo> {
         let mut store = self.write_store_ref();
         let todo = store
@@ -103,6 +113,7 @@ impl TodoRepository for TodoRepositoryForMemory {
         store.insert(id, todo.clone());
         Ok(todo)
     }
+    
     fn delete(&self, id: i32) -> anyhow::Result<()> {
         let mut store = self.write_store_ref();
         store.remove(&id).ok_or(RepositoryError::NotFound(id))?;
